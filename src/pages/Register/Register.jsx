@@ -1,8 +1,11 @@
 import bcrypt from "bcryptjs";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
+import useAxiosPublic from "../../hooks/useAxiosPublic";
 
 const Register = () => {
+  const axiosPublic = useAxiosPublic();
   const {
     register,
     handleSubmit,
@@ -15,7 +18,34 @@ const Register = () => {
       // Hash the PIN before submission
       const hashedPIN = await bcrypt.hash(data.pin, 10);
       // Handle login logic here, including sending hashedPIN to backend for verification
-      console.log("Submitted Data:", { ...data, pin: hashedPIN });
+      const name = data.name;
+      const emailOrPhone = data.emailOrPhone;
+      const pin = hashedPIN;
+      const role = data.role;
+      const userInfo = {
+        name: name,
+        emailOrPhone: emailOrPhone,
+        pin: pin,
+        role: role,
+      };
+      await axiosPublic.post("/users", userInfo).then((res) => {
+        if (res.data.insertedId) {
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "You have Successfully signed up. Please login",
+            showConfirmButton: false,
+            timer: 1000,
+          });
+        } else {
+          Swal.fire({
+            position: "top-end",
+            title: `${res.data.message}`,
+            showConfirmButton: false,
+            timer: 700,
+          });
+        }
+      });
     } catch (error) {
       console.error("Error hashing PIN:", error);
     }
@@ -46,6 +76,21 @@ const Register = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form-control">
               <label className="label">
+                <span className="label-text">User Name</span>
+              </label>
+              <input
+                type="text"
+                {...register("name", { required: true })}
+                name="name"
+                placeholder="User Name"
+                className="w-full px-3 py-2 border rounded-md dark:border-gray-300 dark:bg-gray-50 dark:text-gray-800 focus:dark:border-violet-600"
+              />
+              {errors.name && (
+                <span className="text-red-600">Name is required</span>
+              )}
+            </div>
+            <div className="form-control">
+              <label className="label">
                 <span className="label-text">Email/Phone Number</span>
               </label>
               <input
@@ -61,6 +106,20 @@ const Register = () => {
                   {errors.emailOrPhone.message}
                 </span>
               )}
+            </div>
+
+            <div className="form-control w-full ">
+              <label className="label">
+                <span className="label-text">Role</span>
+              </label>
+              <select
+                defaultValue="user"
+                {...register("role", { required: true })}
+                className="select select-bordered w-full"
+              >
+                <option value="user">User</option>
+                <option value="agent">Agent</option>
+              </select>
             </div>
 
             <div className="form-control">
