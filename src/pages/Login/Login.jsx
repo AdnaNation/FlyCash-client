@@ -1,8 +1,13 @@
 import bcrypt from "bcryptjs";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import useAxiosPublic from "../../hooks/useAxiosPublic";
 
 const Login = () => {
+  //   const [user, setUser] = useState(null);
+  //   const [hashedPin, setHashedPin] = useState("");
+  //   console.log(user);
+  const axiosPublic = useAxiosPublic();
   const {
     register,
     handleSubmit,
@@ -13,9 +18,15 @@ const Login = () => {
     try {
       // Hash the PIN before submission
       const hashedPIN = await bcrypt.hash(data.pin, 10);
-      // Handle login logic here, including sending hashedPIN to backend for verification
-      console.log("Submitted Data:", { ...data, pin: hashedPIN });
-      localStorage.setItem("userEmailOrPhone", data.emailOrPhone);
+      const userInfo = {
+        emailOrPhone: data.emailOrPhone,
+        hashedPin: hashedPIN,
+      };
+      await localStorage.setItem("userEmailOrPhone", data.emailOrPhone);
+      //   const userEmailOrPhone = await localStorage.getItem("userEmailOrPhone");
+      await axiosPublic.post("/user", userInfo).then((res) => {
+        console.log(res);
+      });
     } catch (error) {
       console.error("Error hashing PIN:", error);
     }
@@ -31,6 +42,7 @@ const Login = () => {
 
     return undefined;
   };
+
   return (
     <div className="bg-pink-500 min-h-screen">
       <div className="text-right p-4">
