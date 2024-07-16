@@ -15,6 +15,7 @@ const Login = () => {
       const hashedPIN = await bcrypt.hash(data.pin, 10);
       // Handle login logic here, including sending hashedPIN to backend for verification
       console.log("Submitted Data:", { ...data, pin: hashedPIN });
+      localStorage.setItem("userEmailOrPhone", data.emailOrPhone);
     } catch (error) {
       console.error("Error hashing PIN:", error);
     }
