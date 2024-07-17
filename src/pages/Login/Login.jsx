@@ -1,12 +1,12 @@
-import bcrypt from "bcryptjs";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAxiosPublic from "../../hooks/useAxiosPublic";
 
 const Login = () => {
-  //   const [user, setUser] = useState(null);
-  //   const [hashedPin, setHashedPin] = useState("");
-  //   console.log(user);
+  const navigation = useNavigate();
+  const [error, setError] = useState(" ");
+  const [loading, setLoading] = useState(false);
   const axiosPublic = useAxiosPublic();
   const {
     register,
@@ -15,20 +15,34 @@ const Login = () => {
   } = useForm();
 
   const onSubmit = async (data) => {
+    setLoading(true);
+    setError(" ");
     try {
       // Hash the PIN before submission
-      const hashedPIN = await bcrypt.hash(data.pin, 10);
+      // const hashedPIN = await bcrypt.hash(data.pin, 10);
       const userInfo = {
         emailOrPhone: data.emailOrPhone,
-        hashedPin: hashedPIN,
+        hashedPin: data.pin,
       };
       await localStorage.setItem("userEmailOrPhone", data.emailOrPhone);
-      //   const userEmailOrPhone = await localStorage.getItem("userEmailOrPhone");
       await axiosPublic.post("/user", userInfo).then((res) => {
-        console.log(res);
+        if (res.status === 200) {
+          const userEmailOrPhone = localStorage.getItem("userEmailOrPhone");
+          const userInfo = { emailOrPhone: userEmailOrPhone };
+          if (userEmailOrPhone) {
+            axiosPublic.post("/jwt", userInfo).then((res) => {
+              if (res.data.token) {
+                localStorage.setItem("access-token", res.data.token);
+                setLoading(false);
+              }
+            });
+          }
+          setError(res.data.message);
+          navigation("/home");
+        }
       });
     } catch (error) {
-      console.error("Error hashing PIN:", error);
+      setError(error?.response?.data?.message);
     }
   };
 
@@ -91,10 +105,15 @@ const Login = () => {
                   Pin must have 5 numaric digits{" "}
                 </span>
               )}
+              {error && <p>{error}</p>}
             </div>
 
             <div className="form-control mt-6">
-              <input className="btn btn-primary" type="submit" value="Login" />
+              <input
+                className="btn btn-primary"
+                type="submit"
+                value={loading ? "Logging" : "Login"}
+              />
             </div>
             <p className="text-white">
               Haven't registered yet?

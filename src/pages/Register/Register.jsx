@@ -9,6 +9,7 @@ const Register = () => {
   const {
     register,
     handleSubmit,
+    reset,
     watch,
     formState: { errors },
   } = useForm();
@@ -27,9 +28,11 @@ const Register = () => {
         emailOrPhone: emailOrPhone,
         pin: pin,
         role: role,
+        status: "pending",
       };
       await axiosPublic.post("/users", userInfo).then((res) => {
         if (res.data.insertedId) {
+          reset();
           Swal.fire({
             position: "top-end",
             icon: "success",
